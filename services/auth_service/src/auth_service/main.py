@@ -1,7 +1,27 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from auth_service.config.settings import settings
 from auth_service.api.v1.router import router
 
+from auth_service.db.session import engine
+from sqlalchemy import text
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup code here (if needed)
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+            print("Database connection successful")
+    except Exception as e:
+        print(f"Database connection failed: {e}")
+        raise e
+    yield
+    # Shutdown code here (if needed)
+
 app = FastAPI()
 
 app.include_router(router, prefix="/api/v1")
+
+# app.router.lifespan_context = lifespan

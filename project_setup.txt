@@ -1,1 +1,3 @@
 poetry config virtualenvs.in-project true
+# run app
+uvicorn auth_service.main:app --reload --app-dir src
