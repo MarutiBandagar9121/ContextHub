@@ -20,8 +20,6 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown code here (if needed)
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 app.include_router(router, prefix="/api/v1")
-
-# app.router.lifespan_context = lifespan
