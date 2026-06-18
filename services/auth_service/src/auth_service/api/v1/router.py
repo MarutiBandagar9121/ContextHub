@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from auth_service.config.settings import settings
+from auth_service.api.v1.auth import router as auth_router
 
 router = APIRouter()
 
@@ -11,3 +12,5 @@ def health_check():
         "app_name": settings.app_name, 
         "app_version": settings.app_version
         }
+
+router.include_router(auth_router)
