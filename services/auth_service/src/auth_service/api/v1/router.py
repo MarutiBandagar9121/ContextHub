@@ -13,4 +13,4 @@ def health_check():
         "app_version": settings.app_version
         }
 
-router.include_router(auth_router)
+router.include_router(auth_router, prefix="/auth", tags=["auth"])
