@@ -4,12 +4,32 @@ Handles user authentication for the ContextHub platform. Other services will eve
 
 ## Current status
 
-Skeleton only — not yet functional auth. Implemented so far:
+Core auth flow is functional. Implemented so far:
 - FastAPI app with a `/api/v1/health` endpoint
 - DB connectivity check on startup (via SQLAlchemy)
-- SQLAlchemy models: `User`, `Organization`, `OrganizationMembership` (no migrations generated yet — Alembic is installed but not initialized)
+- SQLAlchemy models: `User`, `Organization`, `OrganizationMembership`, `Otp`, `RefreshToken` (Alembic migrations wired up)
+- Registration with email OTP verification, login, refresh, logout (see [Endpoints](#endpoints) and [Architectural decisions](#architectural-decisions) below)
 
-Not implemented yet: signup, signin, OTP verification, JWT issuance, password reset.
+Not implemented yet: password reset, OAuth, RBAC/permissions, actually sending OTP emails (notification service isn't wired up — OTPs are just persisted to the DB for now).
+
+## Endpoints
+
+All under `/api/v1`:
+
+- `POST /register` — create a user (or re-issue an OTP for an existing, unverified one) and send an email-verification OTP
+- `POST /verify_otp` — verify the OTP, mark the user verified, issue an access token + refresh token cookie
+- `POST /resend_otp` — re-issue an OTP for an unverified user; does not issue any tokens, since the user hasn't proven anything yet at this point — only `verify_otp` does that
+- `POST /login` — email + password login, issues an access token + refresh token cookie
+- `POST /refresh` — exchange the refresh token cookie for a new access token (rotates the refresh token)
+- `POST /logout` — revoke the refresh token cookie's DB record and clear the cookie
+
+## Architectural decisions
+
+- **Access tokens**: short-lived JWTs (`ACCESS_TOKEN_EXPIRE_MINUTES`, default 30 min), returned in the response body. Intended to be kept in client memory only (not `localStorage`) since this is a browser-only client — minimizes the XSS exposure window.
+- **Refresh tokens**: opaque, long-lived (`REFRESH_TOKEN_EXPIRE_DAYS`, default 7 days), stored hashed (SHA-256, not bcrypt — lookups need a deterministic hash) in the `refresh_tokens` table. Never returned in a response body; transported only via an `httpOnly`, `Secure`, `SameSite=Lax` cookie (`refresh_token`) so XSS can't read it. The `COOKIE_SECURE` setting controls the `Secure` flag — set it to `false` in `.env` for local HTTP development, since browsers drop `Secure` cookies sent over plain `http://`.
+- **One active refresh token per user**: every place that issues a refresh token (`/login`, `/verify_otp`, `/resend_otp`, `/refresh`) first revokes (`revoked_at`) any of the user's previously active refresh tokens. `/refresh` also rotates the token on every call (old one revoked, new one issued) rather than reusing the same one for its whole lifetime.
+- **Logout is lenient**: if the refresh-token cookie is missing or already invalid, `/logout` still succeeds (just clears the cookie) — the goal is "client ends up logged out," not validating what they sent.
+- **OTPs**: 10-minute expiry, typed via `OtpTypesEnum` (currently just `EMAIL_VERIFICATION`). On resend, the previous unused OTP is soft-invalidated (`expires_at` set to now) rather than deleted, to keep a row for audit/abuse-tracking purposes.
 
 ## Prerequisites
 
@@ -42,11 +62,18 @@ Then check `http://127.0.0.1:8000/api/v1/health`.
 
 ```
 src/auth_service/
-  main.py                  # FastAPI app + startup DB check
-  config/settings.py        # env-driven settings (pydantic-settings)
-  api/v1/router.py           # HTTP routes
-  db/base.py, db/session.py  # SQLAlchemy base, engine, session factory
-  dependencies/db.py          # get_db() FastAPI dependency
-  models/                      # SQLAlchemy ORM models
+  main.py                      # FastAPI app + startup DB check
+  config/settings.py           # env-driven settings (pydantic-settings)
+  api/v1/router.py             # router aggregation
+  api/v1/auth.py                # auth HTTP routes (register/verify_otp/resend_otp/login/refresh/logout)
+  services/user_serivice.py     # auth business logic
+  schemas/user_schema.py        # pydantic request/response models
+  db/base.py, db/session.py     # SQLAlchemy base, engine, session factory
+  dependencies/db.py            # get_db() FastAPI dependency
+  models/                       # SQLAlchemy ORM models (User, Otp, RefreshToken, Organization, ...)
   const/                        # shared enums
+  utils/security.py             # password hashing, refresh-token hashing
+  utils/jwt.py                  # JWT creation/decoding
+  utils/cookies.py               # refresh-token cookie helpers
+  utils/otp.py                   # OTP code generation
 ```

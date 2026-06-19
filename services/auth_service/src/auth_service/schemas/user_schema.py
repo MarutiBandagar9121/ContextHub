@@ -25,7 +25,29 @@ class UserOtpVerificationRequestSchema(BaseModel):
     id: int
     otp: str
 
+class UserOtpResendRequestSchema(BaseModel):
+    id: int
+
 class UserOtpVerificationResponseSchema(BaseModel):
     message: str
     access_token: str
-    refresh_token: str
+
+class UserOtpResendResponseSchema(BaseModel):
+    message: str
+
+class UserLoginRequestSchema(BaseModel):
+    email: str
+    password: str
+
+class UserLoginResponseSchema(BaseModel):
+    id: int
+    first_name: str
+    last_name: str | None = None
+    email: str
+    access_token: str
+
+class UserLogoutResponseSchema(BaseModel):
+    message: str
+
+class TokenRefreshResponseSchema(BaseModel):
+    access_token: str

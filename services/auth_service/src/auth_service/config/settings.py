@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
 
+    cookie_secure: bool = True
+
     database_url: str
 
     model_config = SettingsConfigDict(
