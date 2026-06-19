@@ -1,5 +1,5 @@
-from auth_service.db.base import Base
-from auth_service.const.organization_role_enum import OrganizationRoleEnum
+from organization_service.db.base import Base
+from organization_service.const.organization_role_enum import OrganizationRoleEnum
 
 from datetime import datetime,timezone
 

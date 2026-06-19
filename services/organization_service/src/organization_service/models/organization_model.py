@@ -1,4 +1,4 @@
-from auth_service.db.base import Base
+from organization_service.db.base import Base
 from datetime import datetime,timezone
 from sqlalchemy import Column, DateTime,Integer,String, ForeignKey
 
