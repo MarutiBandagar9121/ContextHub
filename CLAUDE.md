@@ -146,3 +146,15 @@ Responsibilities:
 - Service aggregation
 
 ---
+
+# Cross-Service Authentication
+
+`auth_service` is the only service that signs tokens. Every other service only **verifies** them — none of them call back into `auth_service` to do it.
+
+- **Algorithm**: `RS256` (asymmetric). `auth_service` holds the private key and signs access tokens with it. Every verifying service holds only the corresponding **public** key, so a compromised downstream service can never forge a token — it can only check signatures.
+- **Key location**: each service keeps its key(s) in a local `keys/` folder (`services/<service>/keys/`), referenced by path via `JWT_PRIVATE_KEY_PATH` / `JWT_PUBLIC_KEY_PATH` env vars. `.pem` files are gitignored; each `keys/` folder has its own `README.md` with the `openssl` commands to generate/distribute them.
+- **Refresh is never a cross-service concern**: only `auth_service` knows about refresh tokens (opaque, httpOnly cookie). A resource service that gets an expired/invalid access token just returns `401` — the client is responsible for hitting `auth_service`'s `/refresh` endpoint and retrying, not the resource service.
+- **No cross-database foreign keys**: services never reference another service's tables via a DB-level `ForeignKey`. e.g. `organization_service.Organization.owner_id` is a plain indexed column holding an `auth_service` user id — trusted because it came from a verified JWT's `sub` claim, not enforced by a DB constraint (Postgres can't FK across separate databases, and a real FK here would violate database-per-service).
+- **JWT payload stays minimal**: only `sub` (user id), `email`, `type`. No denormalized profile fields (name, etc.) added "just in case" — access tokens live up to their TTL without being refreshed mid-life, so embedding mutable data risks every verifying service reading stale values until reissue. If a service needs richer profile data without an extra call, that's a case for an event-driven local read cache, not for growing the token.
+
+---

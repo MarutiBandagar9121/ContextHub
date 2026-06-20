@@ -5,8 +5,9 @@ class Settings(BaseSettings):
     app_name: str = "auth_service"
     app_version: str = "0.1.0"
 
-    jwt_secret_key: str
-    jwt_algorithm: str = "HS256"
+    jwt_private_key_path: str
+    jwt_public_key_path: str
+    jwt_algorithm: str = "RS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
 

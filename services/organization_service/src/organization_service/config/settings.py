@@ -5,6 +5,9 @@ class Settings(BaseSettings):
     app_version:str = "0.1.0"
     database_url:str
 
+    jwt_public_key_path: str
+    jwt_algorithm: str = "RS256"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

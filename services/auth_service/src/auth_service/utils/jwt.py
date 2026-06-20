@@ -1,9 +1,13 @@
 import secrets
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import jwt
 
 from auth_service.config.settings import settings
+
+_PRIVATE_KEY = Path(settings.jwt_private_key_path).read_text()
+_PUBLIC_KEY = Path(settings.jwt_public_key_path).read_text()
 
 
 def _create_token(payload: dict, expires_delta: timedelta) -> str:
@@ -13,7 +17,7 @@ def _create_token(payload: dict, expires_delta: timedelta) -> str:
         "iat": now,
         "exp": now + expires_delta,
     }
-    return jwt.encode(full_payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+    return jwt.encode(full_payload, _PRIVATE_KEY, algorithm=settings.jwt_algorithm)
 
 
 def create_access_token(user_id: int, email: str) -> str:
@@ -31,4 +35,4 @@ def create_refresh_token(user_id: int) -> str:
 
 def decode_token(token: str) -> dict:
     """Decodes and validates a JWT, raising jwt.PyJWTError on failure."""
-    return jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+    return jwt.decode(token, _PUBLIC_KEY, algorithms=[settings.jwt_algorithm])

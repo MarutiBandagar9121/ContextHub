@@ -26,6 +26,7 @@ All under `/api/v1`:
 ## Architectural decisions
 
 - **Access tokens**: short-lived JWTs (`ACCESS_TOKEN_EXPIRE_MINUTES`, default 30 min), returned in the response body. Intended to be kept in client memory only (not `localStorage`) since this is a browser-only client — minimizes the XSS exposure window.
+- **Signed with RS256, not a shared secret**: this service holds the private key (`keys/jwt_private.pem`) and is the only one that ever signs a token. Other services verify using only the public key — they can check a token's validity but can never forge one. See [keys/README.md](keys/README.md).
 - **Refresh tokens**: opaque, long-lived (`REFRESH_TOKEN_EXPIRE_DAYS`, default 7 days), stored hashed (SHA-256, not bcrypt — lookups need a deterministic hash) in the `refresh_tokens` table. Never returned in a response body; transported only via an `httpOnly`, `Secure`, `SameSite=Lax` cookie (`refresh_token`) so XSS can't read it. The `COOKIE_SECURE` setting controls the `Secure` flag — set it to `false` in `.env` for local HTTP development, since browsers drop `Secure` cookies sent over plain `http://`.
 - **One active refresh token per user**: every place that issues a refresh token (`/login`, `/verify_otp`, `/resend_otp`, `/refresh`) first revokes (`revoked_at`) any of the user's previously active refresh tokens. `/refresh` also rotates the token on every call (old one revoked, new one issued) rather than reusing the same one for its whole lifetime.
 - **Logout is lenient**: if the refresh-token cookie is missing or already invalid, `/logout` still succeeds (just clears the cookie) — the goal is "client ends up logged out," not validating what they sent.
@@ -46,9 +47,19 @@ poetry install
 cp .env.example .env
 ```
 
+Generate the RS256 keypair used to sign access tokens (see [keys/README.md](keys/README.md) for details and key rotation notes):
+
+```bash
+openssl genrsa -out keys/jwt_private.pem 2048
+openssl rsa -in keys/jwt_private.pem -pubout -out keys/jwt_public.pem
+```
+
+Copy `keys/jwt_public.pem` into every other service that needs to verify this service's tokens (e.g. `services/organization_service/keys/jwt_public.pem`).
+
 Edit `.env` and set:
 - `DATABASE_URL` — must point at a Postgres database you've already created (e.g. `postgresql://user:password@localhost:5432/auth_db`)
-- `JWT_SECRET_KEY` — any secret string for now
+- `JWT_PRIVATE_KEY_PATH` / `JWT_PUBLIC_KEY_PATH` — paths to the keys generated above (e.g. `keys/jwt_private.pem`, `keys/jwt_public.pem`)
+- `JWT_ALGORITHM` — `RS256`
 
 ## Running
 
