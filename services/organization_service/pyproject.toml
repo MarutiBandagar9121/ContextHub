@@ -13,9 +13,11 @@ dependencies = [
     "bcrypt (>=5.0.0,<6.0.0)",
     "pydantic-settings (>=2.14.1,<3.0.0)",
     "alembic (>=1.18.4,<2.0.0)",
-    "psycopg-binary (>=3.3.4,<4.0.0)"
+    "psycopg2-binary (>=2.9.12,<3.0.0)",
 ]
 
+[tool.poetry]
+packages = [{ include = "organization_service", from = "src" }]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

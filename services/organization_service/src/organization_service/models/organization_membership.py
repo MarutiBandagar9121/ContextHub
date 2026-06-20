@@ -9,7 +9,7 @@ class OrganizationMembership(Base):
     __tablename__ = "organization_memberships"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, nullable=False)
     organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=False)
     role = Column(Enum(OrganizationRoleEnum), nullable=False)
     created_at = Column(
