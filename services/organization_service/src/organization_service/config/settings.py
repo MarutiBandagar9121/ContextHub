@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_name:str = "organization_service"
     app_version:str = "0.1.0"
+    port: int = 8001
     database_url:str
 
     jwt_public_key_path: str

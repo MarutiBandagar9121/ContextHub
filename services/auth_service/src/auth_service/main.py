@@ -23,3 +23,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(router, prefix="/api/v1", tags=["api", "v1"])
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("auth_service.main:app", host="0.0.0.0", port=settings.port, reload=True)

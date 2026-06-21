@@ -1,12 +1,13 @@
-from contextlib import contextmanager
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from sqlalchemy import text
 
+from organization_service.config.settings import settings
 from organization_service.db.session import engine
 from organization_service.api.v1.router import router as api_v1_router
 
-@contextmanager
+@asynccontextmanager
 async def lifespan(app = FastAPI):
     try:
         with engine.connect() as connection:
@@ -17,6 +18,10 @@ async def lifespan(app = FastAPI):
     yield
     # shutdown logic
     
-app = FastAPI(lifespan = lifespan)
+app = FastAPI(lifespan=lifespan)
 
 app.include_router(api_v1_router, prefix="/api/v1", tags=["api", "v1"])
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("organization_service.main:app", host="0.0.0.0", port=settings.port, reload=True)

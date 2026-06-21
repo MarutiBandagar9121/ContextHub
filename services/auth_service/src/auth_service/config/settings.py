@@ -4,6 +4,7 @@ class Settings(BaseSettings):
     """Settings for the auth service."""
     app_name: str = "auth_service"
     app_version: str = "0.1.0"
+    port:int = 8000
 
     jwt_private_key_path: str
     jwt_public_key_path: str
