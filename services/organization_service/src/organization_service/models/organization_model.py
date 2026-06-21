@@ -1,13 +1,16 @@
-from organization_service.db.base import Base
 from datetime import datetime,timezone
+
 from sqlalchemy import Column, DateTime,Integer,String
+from sqlalchemy.orm import relationship
+
+from organization_service.db.base import Base
 
 class Organization(Base):
     __tablename__ = "organizations"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String(255), unique=True, index=True, nullable=False)
-    owner_id = Column(Integer, nullable=False)
+    owner_id = Column(Integer, nullable=False, index=True)
     description = Column(String(512), nullable=True)
     created_at = Column(
         DateTime(timezone=True), 
@@ -18,3 +21,13 @@ class Organization(Base):
         nullable=False,
         default = lambda: datetime.now(timezone.utc),
         onupdate = lambda: datetime.now(timezone.utc))
+    
+    invitations = relationship(
+        "OrganizationInvitations",
+        back_populates="organization"
+    )
+
+    members = relationship(
+        "OrganizationMembership",
+        back_populates="organization",
+    )

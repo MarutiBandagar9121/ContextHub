@@ -27,10 +27,8 @@ class OrganizationMemberDetails(BaseModel):
     role: str
 
 class OrganizationListResponse(BaseModel):
-    id: int
+    org_id: int
     name: str
+    role: str
     description: str | None = None
     owner_id: int
-    members: List[OrganizationMemberDetails]
-    created_at: datetime
-    updated_at: datetime

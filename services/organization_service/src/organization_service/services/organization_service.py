@@ -1,4 +1,7 @@
+from typing import List
+
 from sqlalchemy.orm import Session
+
 
 from organization_service.const.organization_role_enum import OrganizationRoleEnum
 from organization_service.models.organization_membership import OrganizationMembership
@@ -29,8 +32,19 @@ def create_organization(payload: CreateOrganization, owner_id: int, db: Session)
 
     return organization
 
-def get_all_user_org_deatails(user_id:int, db:Session)->OrganizationListResponse:
-    pass
+def get_users_org_deatails(user_id:int, db:Session)->List[OrganizationListResponse]:
+    org_details = db.query(OrganizationMembership).filter(OrganizationMembership.user_id == user_id).all()
+    
+    response: List[OrganizationListResponse] = list()
+    for org_detail in org_details:
+        response.append(OrganizationListResponse(
+            org_id = org_detail.organization_id,
+            name = org_detail.organization.name,
+            role = org_detail.role,
+            description= org_detail.organization.description,
+            owner_id = org_detail.organization.owner_id,
+        ))
+    return response
 
 
     

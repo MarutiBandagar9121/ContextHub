@@ -22,4 +22,4 @@ def get_user_orgs(
     current_user_id:int = Depends(get_current_user_id),
     db:Session  = Depends(get_db)
 ):
-    return org_service.get_all_user_org_deatails(current_user_id,db)
+    return org_service.get_users_org_deatails(current_user_id,db)
