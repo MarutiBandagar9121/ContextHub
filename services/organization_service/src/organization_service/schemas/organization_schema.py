@@ -19,13 +19,6 @@ class OrganizationResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
-class OrganizationMemberDetails(BaseModel):
-    user_id: int
-    first_name: str
-    last_name: str
-    email: str
-    role: str
-
 class OrganizationListResponse(BaseModel):
     org_id: int
     name: str
