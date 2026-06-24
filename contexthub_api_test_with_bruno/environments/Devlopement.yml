@@ -1,0 +1,8 @@
+name: Devlopement
+variables:
+  - name: auth_service_base_url
+    value: http://localhost:8000/api/v1
+  - name: org_service_base_url
+    value: http://localhost:8001/api/v1
+  - name: access_token
+    value: ""
