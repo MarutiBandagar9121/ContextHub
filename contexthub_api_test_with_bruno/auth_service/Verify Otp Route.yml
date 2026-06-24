@@ -11,9 +11,19 @@ http:
     data: |-
       {
         "id":2,
-        "otp":"321965"
+        "otp":"494140"
       }
   auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if(res.getStatus() === 200){
+          const data = res.getBody()
+          const token = data?.access_token;
+          bru.setEnvVar("access_token", token);
+        }
 
 settings:
   encodeUrl: true

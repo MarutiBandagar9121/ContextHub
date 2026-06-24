@@ -1,6 +1,6 @@
 from datetime import datetime,timezone
 
-from sqlalchemy import Column, DateTime,Integer,String
+from sqlalchemy import Column, DateTime,Integer,String, Boolean
 from sqlalchemy.orm import relationship
 
 from organization_service.db.base import Base
@@ -16,6 +16,10 @@ class Organization(Base):
         DateTime(timezone=True), 
         nullable=False,
         default= lambda: datetime.now(timezone.utc))
+    deleted_at = Column(
+        DateTime(timezone=True),
+        nullable = True,
+        default = None)
     updated_at = Column(
         DateTime(timezone=True), 
         nullable=False,

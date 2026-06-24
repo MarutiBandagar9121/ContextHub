@@ -19,6 +19,15 @@ class OrganizationResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
+class UserDetail(BaseModel):
+    user_id: int
+    first_name: str
+    last_name: str
+    email: str
+
+class OrganizationFullDetailsResponse(OrganizationResponse):
+    users: List[UserDetail]
+
 class OrganizationListResponse(BaseModel):
     org_id: int
     name: str

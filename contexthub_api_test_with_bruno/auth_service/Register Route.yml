@@ -12,7 +12,7 @@ http:
       {
         "first_name":"Maruti",
         "last_name":"Bandagar",
-        "email":"maruti.bandagar@yahoo.com",
+        "email":"maruti.bandagar@gmail.com",
         "password":"pass123"
       }
   auth: inherit

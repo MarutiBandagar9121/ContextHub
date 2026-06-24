@@ -1,12 +1,14 @@
 from typing import List
+from datetime import datetime, timezone
 
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 
 from organization_service.const.organization_role_enum import OrganizationRoleEnum
 from organization_service.models.organization_membership import OrganizationMembership
 from organization_service.models.organization_model import Organization
-from organization_service.schemas.organization_schema import CreateOrganization, OrganizationListResponse
+from organization_service.schemas.organization_schema import CreateOrganization, OrganizationFullDetailsResponse, OrganizationListResponse
 
 
 def create_organization(payload: CreateOrganization, owner_id: int, db: Session) -> Organization:
@@ -33,7 +35,11 @@ def create_organization(payload: CreateOrganization, owner_id: int, db: Session)
     return organization
 
 def get_users_org_deatails(user_id:int, db:Session)->List[OrganizationListResponse]:
-    org_details = db.query(OrganizationMembership).filter(OrganizationMembership.user_id == user_id).all()
+    org_details = db.query(OrganizationMembership).join(
+        Organization, Organization.id == OrganizationMembership.organization_id).filter(
+            OrganizationMembership.user_id == user_id,
+            Organization.deleted_at.is_(None)
+        ).all()
     
     response: List[OrganizationListResponse] = list()
     for org_detail in org_details:
@@ -46,8 +52,36 @@ def get_users_org_deatails(user_id:int, db:Session)->List[OrganizationListRespon
         ))
     return response
 
-def delete_org(current_user_id:int, org_id:int,db:Session):
-    orgs_to_delete = db.query(Organization).filter(Organization.owner_id == current_user_id, Organization.id == org_id)
+def get_org_details(org_id:int, db:Session)->OrganizationFullDetailsResponse:
+    org_detail = db.query(Organization).filter(
+        Organization.id == org_id,
+        Organization.deleted_at.is_(None)
+        ).first()
+    if not org_detail:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Orgization not found")
+    user_ids = db.query(OrganizationMembership).filter(
+        OrganizationMembership.user_id == org_detail.id
+        ).with_entities(
+            OrganizationMembership.user_id
+        ).all()
+    user_ids = [row[0] for row in user_ids]
+    return org_detail
+
+def delete_org(org_id:int, current_user_id:int, db:Session):
+    org_to_delete = db.query(Organization).filter(
+        Organization.owner_id == current_user_id, 
+        Organization.id == org_id,
+        Organization.deleted_at.is_(None)
+        ).first()
+    if not org_to_delete:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization does not exist")
+    try:
+        org_to_delete.deleted_at = datetime.now(timezone.utc)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, details="Organization deletion failed.")
+    return {"message":"Organization deletion successfull"}
     
 
 

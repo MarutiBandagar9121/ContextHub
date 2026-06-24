@@ -6,7 +6,7 @@ from sqlalchemy import text
 from organization_service.config.settings import settings
 from organization_service.db.session import engine
 from organization_service.api.v1.router import router as api_v1_router
-from organization_service.api_internal.v1.router import router as api_internal_v1_router
+from services.organization_service.src.organization_service.api_internal.v1.internal_router import router as api_internal_v1_router
 
 @asynccontextmanager
 async def lifespan(app = FastAPI):
