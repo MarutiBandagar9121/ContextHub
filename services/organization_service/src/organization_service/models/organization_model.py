@@ -11,7 +11,7 @@ class Organization(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(255), unique=True, index=True, nullable=False)
     owner_id = Column(Integer, nullable=False, index=True)
-    description = Column(String(512), nullable=True)
+    description = Column(String(512), nullable=True) 
     created_at = Column(
         DateTime(timezone=True), 
         nullable=False,

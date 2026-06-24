@@ -1,0 +1,22 @@
+info:
+  name: Verify Otp Route
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{auth_service_base_url}}/auth/verify_otp"
+  body:
+    type: json
+    data: |-
+      {
+        "id":2,
+        "otp":"321965"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

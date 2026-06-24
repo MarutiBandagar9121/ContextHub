@@ -6,6 +6,7 @@ from sqlalchemy import text
 from organization_service.config.settings import settings
 from organization_service.db.session import engine
 from organization_service.api.v1.router import router as api_v1_router
+from organization_service.api_internal.v1.router import router as api_internal_v1_router
 
 @asynccontextmanager
 async def lifespan(app = FastAPI):
@@ -20,7 +21,8 @@ async def lifespan(app = FastAPI):
     
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(api_v1_router, prefix="/api/v1", tags=["api", "v1"])
+app.include_router(api_v1_router, prefix="/api/v1", tags=["api_v1"])
+app.include_router(api_internal_v1_router, prefix="/internal/v1", tags=["internal_api_v1"])
 
 if __name__ == "__main__":
     import uvicorn

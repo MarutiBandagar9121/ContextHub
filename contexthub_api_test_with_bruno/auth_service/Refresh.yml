@@ -1,0 +1,25 @@
+info:
+  name: Refresh
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: "{{auth_service_base_url}}/auth/refresh"
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if(res.getStatus() === 200){
+          const data = res.getBody()
+          const token = data?.access_token;
+          bru.setEnvVar("access_token", token);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

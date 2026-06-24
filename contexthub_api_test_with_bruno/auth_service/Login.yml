@@ -1,0 +1,47 @@
+info:
+  name: Login
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{auth_service_base_url}}/auth/login"
+  body:
+    type: json
+    data: |-
+      {
+        "email":"maruti.bandagar@yahoo.com",
+        "password":"pass123"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.getStatus() === 200) {  
+          const body = res.getBody();
+          let data;
+          
+          if (typeof body === 'string') {
+            try {
+              data = JSON.parse(body);
+            } catch (e) {
+            }
+          } else {
+            data = body;
+          }
+          
+          const token = data?.access_token;
+          
+          if (token) {
+            bru.setEnvVar("access_token", token);
+          } else {
+          }
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
