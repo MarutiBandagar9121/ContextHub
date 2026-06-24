@@ -25,3 +25,11 @@ def get_user_orgs(
     db:Session  = Depends(get_db)
 ):
     return org_service.get_users_org_deatails(current_user_id,db)
+
+@router.delete("/{org_id}")
+def delete_org(
+    org_id:int,
+    current_user_id:int = Depends(get_current_user_id),
+    db:Session = Depends(get_db),
+    ):
+    return org_service.delete_org(current_user_id,org_id)

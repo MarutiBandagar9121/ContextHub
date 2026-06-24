@@ -46,5 +46,10 @@ def get_users_org_deatails(user_id:int, db:Session)->List[OrganizationListRespon
         ))
     return response
 
+def delete_org(current_user_id:int, org_id:int,db:Session):
+    orgs_to_delete = db.query(Organization).filter(Organization.owner_id == current_user_id, Organization.id == org_id)
+    
+
+
 
     
