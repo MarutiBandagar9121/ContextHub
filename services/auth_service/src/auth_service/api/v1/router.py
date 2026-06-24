@@ -5,7 +5,7 @@ from auth_service.api.v1.auth import router as auth_router
 
 router = APIRouter()
 
-@router.get("/health")
+@router.get("/auth/health")
 def health_check():
     return {
         "msg":"Auth service is healthy", 

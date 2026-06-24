@@ -3,7 +3,7 @@ from organization_service.api.v1.organization_routes import router as organizati
 
 router = APIRouter()
 
-@router.get("/health")
+@router.get("/organization/health")
 def get_hello():
     return {"msg":"Organization service is healthy"}
 

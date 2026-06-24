@@ -1,0 +1,10 @@
+opencollection: 1.0.0
+
+info:
+  name: contexthub_api_test_with_bruno
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git

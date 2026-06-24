@@ -1,0 +1,15 @@
+info:
+  name: Refresh
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: "{{auth_service_base_url}}/auth/refresh"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

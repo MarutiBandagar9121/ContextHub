@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -17,7 +19,7 @@ def create_organization(
 ):
     return org_service.create_organization(payload, owner_id=current_user_id, db=db)
 
-@router.get("", response_model=OrganizationListResponse)
+@router.get("", response_model=List[OrganizationListResponse])
 def get_user_orgs(
     current_user_id:int = Depends(get_current_user_id),
     db:Session  = Depends(get_db)

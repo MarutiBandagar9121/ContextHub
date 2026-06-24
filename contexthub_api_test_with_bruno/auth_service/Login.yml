@@ -1,0 +1,22 @@
+info:
+  name: Login
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{auth_service_base_url}}/auth/login"
+  body:
+    type: json
+    data: |-
+      {
+        "email":"maruti.bandagar@yahoo.com",
+        "password":"pass123"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
