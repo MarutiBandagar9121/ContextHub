@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import Session
+from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
 from auth_service.schemas.internal.user_schema import UserIdsRequestSchema
@@ -19,4 +19,3 @@ def get_all_users_details(payload : UserIdsRequestSchema, db:Session)->List[User
         )
     
     return users
-    

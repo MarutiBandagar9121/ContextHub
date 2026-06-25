@@ -6,3 +6,7 @@ variables:
     value: http://localhost:8001/api/v1
   - name: access_token
     value: ""
+  - name: auth_service_internal_base_url
+    value: http://localhost:8000/internal/api/v1
+  - name: org_service_internal_base_url
+    value: http://localhost:8001/internal/api/v1

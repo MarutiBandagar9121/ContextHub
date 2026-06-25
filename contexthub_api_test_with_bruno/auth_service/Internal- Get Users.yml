@@ -1,0 +1,21 @@
+info:
+  name: "Internal: Get Users"
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: "{{auth_service_internal_base_url}}/user/batch"
+  body:
+    type: json
+    data: |-
+      {
+        "user_ids":[2,3]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

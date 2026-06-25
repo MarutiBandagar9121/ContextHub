@@ -3,7 +3,7 @@ from typing import List
 from pydantic import BaseModel
 
 class UserIdsRequestSchema(BaseModel):
-    user_ids = List[int]
+    user_ids:List[int]
 
 class UserDetails(BaseModel):
     user_id:int
