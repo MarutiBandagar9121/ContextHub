@@ -24,6 +24,7 @@ class UserDetail(BaseModel):
     first_name: str
     last_name: str
     email: str
+    user_role: str
 
 class OrganizationFullDetailsResponse(OrganizationResponse):
     users: List[UserDetail]

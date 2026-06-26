@@ -8,7 +8,9 @@ from sqlalchemy.orm import Session
 from organization_service.const.organization_role_enum import OrganizationRoleEnum
 from organization_service.models.organization_membership import OrganizationMembership
 from organization_service.models.organization_model import Organization
-from organization_service.schemas.organization_schema import CreateOrganization, OrganizationFullDetailsResponse, OrganizationListResponse
+from organization_service.schemas.organization_schema import CreateOrganization, OrganizationFullDetailsResponse, OrganizationListResponse, UserDetail
+from organization_service.http_clients.user_service_client import UserServiceClient
+from organization_service.schemas.user_schema import UserServiceUserDetailsResponse
 
 
 def create_organization(payload: CreateOrganization, owner_id: int, db: Session) -> Organization:
@@ -52,21 +54,68 @@ def get_users_org_deatails(user_id:int, db:Session)->List[OrganizationListRespon
         ))
     return response
 
-def get_org_details(org_id:int, db:Session)->OrganizationFullDetailsResponse:
+# organization_service.py
+async def get_org_details(org_id: int, db: Session) -> OrganizationFullDetailsResponse:
+    # 1. Get organization details
     org_detail = db.query(Organization).filter(
         Organization.id == org_id,
         Organization.deleted_at.is_(None)
-        ).first()
+    ).first()
+    
     if not org_detail:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Orgization not found")
-    user_ids = db.query(OrganizationMembership).filter(
-        OrganizationMembership.user_id == org_detail.id
-        ).with_entities(
-            OrganizationMembership.user_id
-        ).all()
-    user_ids = [row[0] for row in user_ids]
-    return org_detail
-
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+    
+    # 2. Get all memberships with roles
+    memberships = db.query(OrganizationMembership).filter(
+        OrganizationMembership.organization_id == org_detail.id
+    ).all()
+    
+    # Extract user IDs and create a mapping of user_id -> role
+    user_id_to_role = {membership.user_id: membership.role for membership in memberships}
+    user_ids = list(user_id_to_role.keys())
+    
+    user_client = UserServiceClient()
+    try:
+        user_details:List[UserServiceUserDetailsResponse] = await user_client.get_users_by_ids(user_ids)
+    except Exception as e:
+        # logger.error(f"Failed to fetch user details: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch user details: {str(e)}")
+    
+    # 4. Combine user details with roles
+    users_response = []
+    for user in user_details:
+        # print(f"user in loop: {user}")
+        users_response.append(
+            UserDetail(
+                user_id=user.user_id,
+                first_name=user.first_name,
+                last_name=user.last_name,
+                email=user.email,
+                user_role=user_id_to_role.get(user.user_id, "MEMBER")
+            )
+        )
+    
+    # 5. Return complete response
+    return OrganizationFullDetailsResponse(
+        id=org_detail.id,
+        name=org_detail.name,
+        description=org_detail.description,
+        owner_id=org_detail.owner_id,
+        created_at=org_detail.created_at,
+        updated_at=org_detail.updated_at,
+        users=users_response
+    )
+    
+    # 5. Return complete response
+    return OrganizationFullDetailsResponse(
+        id=org_detail.id,
+        name=org_detail.name,
+        description=org_detail.description,
+        owner_id=org_detail.owner_id,
+        created_at=org_detail.created_at,
+        updated_at=org_detail.updated_at,
+        users=users_response
+    )
 def delete_org(org_id:int, current_user_id:int, db:Session):
     org_to_delete = db.query(Organization).filter(
         Organization.owner_id == current_user_id, 

@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     jwt_public_key_path: str
     jwt_algorithm: str = "RS256"
 
-    user_service_host:str = "http://localhost:8000"
+    user_service_host:str = "http://localhost:8000/internal/api/v1"
     user_service_name:str = "Contexthub_Auth_Service"
     user_service_timeout:int = 30
     user_service_retry_count:int = 3

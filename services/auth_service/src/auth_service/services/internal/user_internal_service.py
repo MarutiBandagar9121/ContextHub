@@ -17,5 +17,13 @@ def get_all_users_details(payload : UserIdsRequestSchema, db:Session)->List[User
            status_code=status.HTTP_404_NOT_FOUND, 
            detail="Users not found"
         )
-    
-    return users
+    user_details_list = []
+    for user in users:
+        user_detail = {
+            "user_id": user.id,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email
+        }
+        user_details_list.append(user_detail)
+    return user_details_list

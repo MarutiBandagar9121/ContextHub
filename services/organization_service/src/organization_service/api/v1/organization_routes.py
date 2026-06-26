@@ -28,8 +28,8 @@ def get_user_orgs(
     return org_service.get_users_org_deatails(current_user_id,db)
 
 @router.get("/{org_id}", response_model=OrganizationFullDetailsResponse)
-def get_org_details(org_id:int, db:Session = Depends(get_db)):
-    return org_service.get_org_details(org_id,db)
+async def get_org_details(org_id:int, db:Session = Depends(get_db)):
+    return await org_service.get_org_details(org_id,db)
 
 
 @router.delete("/{org_id}")

@@ -1,6 +1,6 @@
 import httpx
 import logging
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 # Setup logging - so we can see what's happening
 logger = logging.getLogger(__name__)
