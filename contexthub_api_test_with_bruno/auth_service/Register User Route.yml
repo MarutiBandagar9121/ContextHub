@@ -1,5 +1,5 @@
 info:
-  name: Register Route
+  name: Register User Route
   type: http
   seq: 2
 
@@ -10,9 +10,9 @@ http:
     type: json
     data: |-
       {
-        "first_name":"Rohit",
-        "last_name":"Sharma",
-        "email":"rohit@gmail.com",
+        "first_name":"Maruti",
+        "last_name":"Bandagar",
+        "email":"maruti.bandagar@gmail.com",
         "password":"pass123"
       }
   auth: inherit

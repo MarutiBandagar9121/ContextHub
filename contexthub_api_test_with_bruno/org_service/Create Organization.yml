@@ -10,7 +10,7 @@ http:
     type: json
     data: |-
       {
-        "name":"Test Org 4",
+        "name":"Test Org 11",
         "description":"This is an org created for testing purpose"
       }
   auth: inherit
