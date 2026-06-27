@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{org_service_base_url}}/organization/2"
+  url: "{{org_service_base_url}}/organization/3"
   auth: inherit
 
 settings:

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from organization_service.dependencies.db import get_db
 from organization_service.dependencies.user import get_current_user_id
-from organization_service.schemas.organization_schema import CreateOrganization, OrganizationFullDetailsResponse, OrganizationListResponse, OrganizationResponse
+from organization_service.schemas.organization_schema import CreateOrganization, OrganizationFullDetailsResponse, OrganizationInvitationPayload, OrganizationListResponse, OrganizationResponse
 from organization_service.services import organization_service as org_service
 
 router = APIRouter()
@@ -28,7 +28,11 @@ def get_user_orgs(
     return org_service.get_users_org_deatails(current_user_id,db)
 
 @router.get("/{org_id}", response_model=OrganizationFullDetailsResponse)
-async def get_org_details(org_id:int, db:Session = Depends(get_db)):
+async def get_org_details(
+    org_id:int, 
+    current_user_id:int = Depends(get_current_user_id),
+    db:Session = Depends(get_db),
+    ):
     return await org_service.get_org_details(org_id,db)
 
 
@@ -39,3 +43,10 @@ def delete_org(
     db:Session = Depends(get_db),
     ):
     return org_service.delete_org(org_id,current_user_id,db)
+
+@router.post("/invitation")
+def create_org_invitation(
+    payload: OrganizationInvitationPayload, 
+    current_user_id:int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)):
+    return org_service.make_org_invitation(payload,current_user_id, db)

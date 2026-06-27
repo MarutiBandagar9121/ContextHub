@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from organization_service.const.organization_role_enum import OrganizationRoleEnum
 from organization_service.models.organization_membership import OrganizationMembership
 from organization_service.models.organization_model import Organization
-from organization_service.schemas.organization_schema import CreateOrganization, OrganizationFullDetailsResponse, OrganizationListResponse, UserDetail
+from organization_service.schemas.organization_schema import CreateOrganization, OrganizationFullDetailsResponse, OrganizationInvitationPayload, OrganizationListResponse, UserDetail
 from organization_service.http_clients.user_service_client import UserServiceClient
 from organization_service.schemas.user_schema import UserServiceUserDetailsResponse
 
@@ -131,6 +131,14 @@ def delete_org(org_id:int, current_user_id:int, db:Session):
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, details="Organization deletion failed.")
     return {"message":"Organization deletion successfull"}
+
+def make_org_invitation(
+        payload: OrganizationInvitationPayload,
+        current_user_id:int,
+        db: Session,
+        ):
+
+    pass
     
 
 

@@ -35,3 +35,9 @@ class OrganizationListResponse(BaseModel):
     role: str
     description: str | None = None
     owner_id: int
+
+class OrganizationInvitationPayload(BaseModel):
+    org_id: int
+    invited_by_id: int
+    invited_user_email: str
+    invited_for_role: str
