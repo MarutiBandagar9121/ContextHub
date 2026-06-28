@@ -1,11 +1,11 @@
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from organization_service.dependencies.db import get_db
 from organization_service.dependencies.user import get_current_user_id
-from organization_service.schemas.organization_schema import CreateOrganization, OrganizationFullDetailsResponse, OrganizationInvitationPayload, OrganizationListResponse, OrganizationResponse
+from organization_service.schemas.organization_schema import CreateOrganization, OrganizationFullDetailsResponse, OrganizationInvitationPayload, OrganizationInvitationResponse, OrganizationListResponse, OrganizationResponse
 from organization_service.services import organization_service as org_service
 
 router = APIRouter()
@@ -44,7 +44,7 @@ def delete_org(
     ):
     return org_service.delete_org(org_id,current_user_id,db)
 
-@router.post("/invitation")
+@router.post("/invitation", response_model=OrganizationInvitationResponse, status_code=status.HTTP_201_CREATED)
 def create_org_invitation(
     payload: OrganizationInvitationPayload, 
     current_user_id:int = Depends(get_current_user_id),

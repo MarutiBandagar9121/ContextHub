@@ -1,5 +1,6 @@
 from typing import List
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+import uuid
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
@@ -8,9 +9,11 @@ from sqlalchemy.orm import Session
 from organization_service.const.organization_role_enum import OrganizationRoleEnum
 from organization_service.models.organization_membership import OrganizationMembership
 from organization_service.models.organization_model import Organization
+from organization_service.models.organization_invitations import OrganizationInvitations
 from organization_service.schemas.organization_schema import CreateOrganization, OrganizationFullDetailsResponse, OrganizationInvitationPayload, OrganizationListResponse, UserDetail
 from organization_service.http_clients.user_service_client import UserServiceClient
 from organization_service.schemas.user_schema import UserServiceUserDetailsResponse
+from organization_service.const.organization_invitation_status_enum import OrganizationInvitationStatusEnum
 
 
 def create_organization(payload: CreateOrganization, owner_id: int, db: Session) -> Organization:
@@ -105,17 +108,7 @@ async def get_org_details(org_id: int, db: Session) -> OrganizationFullDetailsRe
         updated_at=org_detail.updated_at,
         users=users_response
     )
-    
-    # 5. Return complete response
-    return OrganizationFullDetailsResponse(
-        id=org_detail.id,
-        name=org_detail.name,
-        description=org_detail.description,
-        owner_id=org_detail.owner_id,
-        created_at=org_detail.created_at,
-        updated_at=org_detail.updated_at,
-        users=users_response
-    )
+
 def delete_org(org_id:int, current_user_id:int, db:Session):
     org_to_delete = db.query(Organization).filter(
         Organization.owner_id == current_user_id, 
@@ -137,8 +130,54 @@ def make_org_invitation(
         current_user_id:int,
         db: Session,
         ):
+    org_membership_detail = db.query(OrganizationMembership).filter(
+        OrganizationMembership.organization_id == payload.org_id,
+        OrganizationMembership.user_id == current_user_id
+    ).first()
 
-    pass
+    if not org_membership_detail:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            details="You dont have the necessary permissions to make an invitation"
+            )
+    
+    if org_membership_detail.role not in {OrganizationRoleEnum.ADMIN, OrganizationRoleEnum.OWNER}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            details="You dont have the necessary permissions to make an invitation"
+            )
+    
+    existing_invitation = db.query(OrganizationInvitations).filter(
+        OrganizationInvitations.org_id == payload.org_id,
+        OrganizationInvitations.invited_user_email == payload.invited_user_email,
+        OrganizationInvitations.invitation_status == OrganizationInvitationStatusEnum.PENDING
+    ).first()
+    
+    if existing_invitation:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This email already has a pending invitation"
+        )
+    
+    invitation_token = str(uuid.uuid4())
+    org_invitation = OrganizationInvitations(
+        org_id = payload.org_id,
+        invitation_token = invitation_token,
+        invited_by_id = current_user_id,
+        invited_user_email = payload.invited_user_email,
+        invitation_status = OrganizationInvitationStatusEnum.PENDING,
+        invited_for_role = payload.invited_for_role,
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=48)
+    )
+
+    db.add(org_invitation)
+    db.commit()
+    db.refresh(org_invitation)
+
+    return org_invitation
+
+
+    
     
 
 

@@ -3,6 +3,8 @@ from typing import List
 
 from pydantic import BaseModel
 
+from organization_service.const.organization_role_enum import OrganizationInvitationRoleEnum
+
 
 class CreateOrganization(BaseModel):
     name: str
@@ -40,4 +42,14 @@ class OrganizationInvitationPayload(BaseModel):
     org_id: int
     invited_by_id: int
     invited_user_email: str
+    invited_for_role: OrganizationInvitationRoleEnum
+
+class OrganizationInvitationResponse(BaseModel):
+    id: int
+    org_id: int
+    invited_user_email: str
     invited_for_role: str
+
+    model_config={
+        "from_attributes": True
+    }

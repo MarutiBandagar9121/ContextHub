@@ -5,3 +5,9 @@ class OrganizationRoleEnum(str, Enum):
     ADMIN = "admin"
     MEMBER = "member"
     VIEWER = "viewer"
+
+class OrganizationInvitationRoleEnum(str, Enum):
+    OWNER = "owner"
+    ADMIN = "admin"
+    MEMBER = "member"
+    VIEWER = "viewer"
