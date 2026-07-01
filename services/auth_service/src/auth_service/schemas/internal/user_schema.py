@@ -6,7 +6,7 @@ class UserIdsRequestSchema(BaseModel):
     user_ids:List[int]
 
 class UserDetails(BaseModel):
-    user_id:int
+    id:int
     first_name:str
     last_name:str
     email:str

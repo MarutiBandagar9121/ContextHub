@@ -15,13 +15,16 @@ class OrganizationInvitations(Base):
     invitation_token = Column(String, unique=True,nullable=False, index=True)
     invited_by_id = Column(Integer, nullable=False, index=True)
     invited_user_email = Column(String, nullable=False, index=True)
+    invited_user_id = Column(Integer, nullable=True, index=True)
     invitation_status = Column(
         Enum(OrganizationInvitationStatusEnum),
         nullable=False,
         default=OrganizationInvitationStatusEnum.PENDING,
     )
     invited_for_role = Column(Enum(OrganizationRoleEnum), nullable=False)
-    is_new_user = Column(Boolean,default=True)
+    is_new_user = Column(Boolean, nullable=True)
+    is_used = Column(Boolean, nullable=False, default=True)
+    used_at = Column(DateTime(timezone=True), nullable=True)
     expires_at = Column(DateTime(timezone=True), nullable=False)
     created_at = Column(
         DateTime(timezone=True), 

@@ -1,11 +1,11 @@
 info:
-  name: Get Organization Detail
+  name: Get Invitation Details
   type: http
-  seq: 5
+  seq: 7
 
 http:
   method: GET
-  url: "{{org_service_base_url}}/organization/4"
+  url: "{{org_service_base_url}}/organization/invitation/894a0495-fd0e-47d1-bacb-bc57b39da028"
   auth: inherit
 
 settings:

@@ -10,9 +10,9 @@ http:
     type: json
     data: |-
       {
-        "first_name":"Maruti",
-        "last_name":"Bandagar",
-        "email":"maruti.bandagar@gmail.com",
+        "first_name":"Virat",
+        "last_name":"Kohli",
+        "email":"virat@gmail.com",
         "password":"pass123"
       }
   auth: inherit

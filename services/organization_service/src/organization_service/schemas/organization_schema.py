@@ -22,7 +22,7 @@ class OrganizationResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 class UserDetail(BaseModel):
-    user_id: int
+    id: int
     first_name: str
     last_name: str
     email: str
@@ -53,3 +53,13 @@ class OrganizationInvitationResponse(BaseModel):
     model_config={
         "from_attributes": True
     }
+
+class InvitationStatusCheckResponse(BaseModel):
+    invitation_id:int
+    invitation_token:str
+    user_exists:bool
+    user_email:str
+    org_id:int
+    org_name:str
+    user_role:str
+    token_expires_at:datetime

@@ -1,5 +1,6 @@
 import httpx
 import logging
+from fastapi import HTTPException, status
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 # Setup logging - so we can see what's happening
@@ -66,21 +67,33 @@ class BaseHTTPClient:
         try:
             # Make the request
             response = await self.client.request(method, endpoint, **kwargs)
-            
+
             # If status is 4xx or 5xx, this raises an exception
             response.raise_for_status()
-            
+
             return response
-            
+
         except httpx.HTTPStatusError as e:
-            # Handle HTTP errors (404, 500, etc.)
+            # Has a real response with a status code - let the caller
+            # decide what a given status means for that endpoint (e.g. 404
+            # might mean "not found" for one call and be irrelevant for another)
             logger.error(f"HTTP error {e.response.status_code}: {e.response.text}")
             raise
-            
-        except Exception as e:
-            # Handle all other errors
-            logger.error(f"Request failed: {str(e)}")
-            raise
+
+        except httpx.TimeoutException:
+            logger.error(f"Timeout calling {method} {self.base_url}{endpoint}")
+            raise HTTPException(
+                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                detail=f"{self.base_url} request timed out",
+            )
+
+        except httpx.HTTPError as e:
+            # Connection errors, DNS failures, etc. - no response to inspect
+            logger.error(f"Communication error calling {method} {self.base_url}{endpoint}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"Could not reach {self.base_url}",
+            )
     
     # PUBLIC METHODS - These are what your code will actually use
     

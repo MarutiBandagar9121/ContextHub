@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from organization_service.dependencies.db import get_db
 from organization_service.dependencies.user import get_current_user_id
-from organization_service.schemas.organization_schema import CreateOrganization, OrganizationFullDetailsResponse, OrganizationInvitationPayload, OrganizationInvitationResponse, OrganizationListResponse, OrganizationResponse
+from organization_service.schemas.organization_schema import CreateOrganization, InvitationStatusCheckResponse, OrganizationFullDetailsResponse, OrganizationInvitationPayload, OrganizationInvitationResponse, OrganizationListResponse, OrganizationResponse
 from organization_service.services import organization_service as org_service
 
 router = APIRouter()
@@ -50,3 +50,7 @@ def create_org_invitation(
     current_user_id:int = Depends(get_current_user_id),
     db: Session = Depends(get_db)):
     return org_service.make_org_invitation(payload,current_user_id, db)
+
+@router.get("/invitation/{invitation_token}", response_model=InvitationStatusCheckResponse, status_code=status.HTTP_200_OK)
+async def check_invitation_status(invitation_token:str, db:Session = Depends(get_db)):
+    return await org_service.check_invitation_status(invitation_token, db)
