@@ -3,15 +3,15 @@ from typing import List
 from datetime import datetime, timezone, timedelta
 import uuid
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, Response, status
 from sqlalchemy.orm import Session
 
-
+from organization_service.config.settings import settings
 from organization_service.const.organization_role_enum import OrganizationRoleEnum
 from organization_service.models.organization_membership import OrganizationMembership
 from organization_service.models.organization_model import Organization
 from organization_service.models.organization_invitations import OrganizationInvitations
-from organization_service.schemas.organization_schema import CreateOrganization, InvitationStatusCheckResponse, OrganizationFullDetailsResponse, OrganizationInvitationPayload, OrganizationListResponse, UserDetail
+from organization_service.schemas.organization_schema import AcceptInvitationRegisterRequest, AcceptInvitationRegisterResponse, CreateOrganization, InvitationStatusCheckResponse, OrganizationFullDetailsResponse, OrganizationInvitationPayload, OrganizationListResponse, UserDetail
 from organization_service.http_clients.user_service_client import UserServiceClient
 from organization_service.schemas.user_schema import UserServiceUserDetailsResponse
 from organization_service.const.organization_invitation_status_enum import OrganizationInvitationStatusEnum
@@ -195,10 +195,6 @@ async def check_invitation_status(invitation_token:str, db:Session)->InvitationS
         invited_user_id = user_details.id
     except HTTPException as e:
         if e.status_code != status.HTTP_404_NOT_FOUND:
-            # We genuinely don't know if this user exists. Don't guess -
-            # a wrong guess routes them into a signup/login flow that's
-            # guaranteed to fail later (e.g. email-uniqueness conflict).
-            # Surface the failure instead so the frontend can ask them to retry.
             logger.error(
                 f"user_service error while checking invitation {invitation_token}: "
                 f"{e.status_code} {e.detail}"
@@ -222,4 +218,86 @@ async def check_invitation_status(invitation_token:str, db:Session)->InvitationS
         org_name=invitation_object.organization.name,
         user_role=invitation_object.invited_for_role.value,
         token_expires_at=invitation_object.expires_at,
+    )
+
+async def accept_invitation_register(
+        invitation_token: str,
+        payload: AcceptInvitationRegisterRequest,
+        response: Response,
+        db: Session) -> AcceptInvitationRegisterResponse:
+
+    invitation = db.query(OrganizationInvitations).filter(
+        OrganizationInvitations.invitation_token == invitation_token
+    ).first()
+
+    if not invitation:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid invitation token")
+
+    if invitation.invitation_status != OrganizationInvitationStatusEnum.PENDING:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invitation is no longer valid")
+
+    if invitation.is_used:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invitation has already been used")
+
+    if invitation.expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invitation has expired")
+
+    if invitation.is_new_user is False:
+        # is_new_user=False means check_invitation_status already confirmed this email exists
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An account with this email already exists. Use the existing-user accept endpoint instead.",
+        )
+
+    auth_client = UserServiceClient()
+    auth_result = await auth_client.register_user_via_invitation(
+        email=invitation.invited_user_email,
+        first_name=payload.first_name,
+        last_name=payload.last_name,
+        password=payload.password,
+    )
+
+    membership = OrganizationMembership(
+        organization_id=invitation.org_id,
+        user_id=auth_result.user_id,
+        role=invitation.invited_for_role,
+    )
+    db.add(membership)
+
+    invitation.is_used = True
+    invitation.invitation_status = OrganizationInvitationStatusEnum.ACCEPTED
+    invitation.invited_user_id = auth_result.user_id
+    invitation.used_at = datetime.now(timezone.utc)
+
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        logger.error(
+            f"Membership commit failed for newly registered user {auth_result.user_id} "
+            f"in org {invitation.org_id}: {e}"
+        )
+        # The user account was already created in auth_service at this point.
+        # Surface a clear error so ops can add the membership manually if needed.
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Account created but failed to join the organization. Please contact support.",
+        )
+
+    response.set_cookie(
+        key="refresh_token",
+        value=auth_result.refresh_token,
+        httponly=True,
+        secure=settings.cookie_secure,
+        samesite="lax",
+        path="/",
+        max_age=settings.refresh_token_expire_days * 24 * 60 * 60,
+    )
+
+    return AcceptInvitationRegisterResponse(
+        user_id=auth_result.user_id,
+        org_id=invitation.org_id,
+        org_name=invitation.organization.name,
+        user_role=invitation.invited_for_role.value,
+        access_token=auth_result.access_token,
     )

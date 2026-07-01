@@ -7,7 +7,7 @@ from pydantic import EmailStr, TypeAdapter, ValidationError
 
 from organization_service.config.settings import settings
 from organization_service.http_clients.base_client import BaseHTTPClient
-from organization_service.schemas.user_schema import UserServiceUserDetailsResponse
+from organization_service.schemas.user_schema import AuthServiceRegisterResponse, UserServiceUserDetailsResponse
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +64,41 @@ class UserServiceClient:
 
             logger.info(f"Successfully fetched {len(users)} users")
             return users
+
+    async def register_user_via_invitation(
+        self,
+        email: str,
+        first_name: str,
+        last_name: str,
+        password: str,
+    ) -> AuthServiceRegisterResponse:
+        async with BaseHTTPClient(self.base_url, self.timeout) as client:
+            try:
+                response = await client.post(
+                    "/user/register",
+                    json={"email": email, "first_name": first_name, "last_name": last_name, "password": password},
+                )
+            except HTTPStatusError as e:
+                logger.error(f"auth_service error registering invited user: {e.response.status_code} {e.response.text}")
+                # Preserve 409 (email already registered) as-is; wrap everything else as 502
+                if e.response.status_code == status.HTTP_409_CONFLICT:
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail=e.response.json().get("detail", "Email already registered"),
+                    ) from e
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="Auth service returned an error",
+                ) from e
+
+            try:
+                return AuthServiceRegisterResponse.model_validate_json(response.text)
+            except ValidationError as e:
+                logger.error(f"Auth service register response validation failed: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="Auth service returned malformed data",
+                ) from e
 
     async def get_user_by_email(self, email: EmailStr) -> UserServiceUserDetailsResponse:
         async with BaseHTTPClient(self.base_url, self.timeout) as client:

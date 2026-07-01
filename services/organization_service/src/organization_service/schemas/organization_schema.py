@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from organization_service.const.organization_role_enum import OrganizationInvitationRoleEnum
 
@@ -63,3 +63,15 @@ class InvitationStatusCheckResponse(BaseModel):
     org_name:str
     user_role:str
     token_expires_at:datetime
+
+class AcceptInvitationRegisterRequest(BaseModel):
+    first_name:str
+    last_name:str
+    password:str
+
+class AcceptInvitationRegisterResponse(BaseModel):
+    user_id:int
+    org_id:int
+    org_name:str
+    user_role:str
+    access_token:str

@@ -1,0 +1,23 @@
+info:
+  name: Accept Invitation Register
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: "{{org_service_base_url}}/organization/invitation/894a0495-fd0e-47d1-bacb-bc57b39da028/accept"
+  body:
+    type: json
+    data: |-
+      {
+        "first_name":"Maruti2",
+        "last_name":"Bandagar2",
+        "password":"pass123"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,11 +1,10 @@
 from typing import List
 
-from fastapi import APIRouter, Query
-from fastapi import Depends
+from fastapi import APIRouter, Depends, Query, status
 from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
-from auth_service.schemas.internal.user_schema import UserDetails, UserIdsRequestSchema
+from auth_service.schemas.internal.user_schema import InternalRegisterRequest, InternalRegisterResponse, UserDetails, UserIdsRequestSchema
 from auth_service.services.internal import user_internal_service as interna_user_service
 from auth_service.dependencies.db import get_db
 
@@ -21,4 +20,8 @@ def get_user_by_email(
     email:EmailStr = Query(..., description="Email address of the user to fetch"),
     db:Session = Depends(get_db)
 ):
-    return interna_user_service.get_user_details_by_email(email,db)
+    return interna_user_service.get_user_details_by_email(email, db)
+
+@router.post("/register", response_model=InternalRegisterResponse, status_code=status.HTTP_201_CREATED)
+def register_via_invitation(payload: InternalRegisterRequest, db: Session = Depends(get_db)):
+    return interna_user_service.register_user_via_invitation(payload, db)

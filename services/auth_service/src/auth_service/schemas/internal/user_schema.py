@@ -10,3 +10,14 @@ class UserDetails(BaseModel):
     first_name:str
     last_name:str
     email:str
+
+class InternalRegisterRequest(BaseModel):
+    email: str
+    first_name: str
+    last_name: str
+    password: str
+
+class InternalRegisterResponse(BaseModel):
+    user_id: int
+    access_token: str
+    refresh_token: str

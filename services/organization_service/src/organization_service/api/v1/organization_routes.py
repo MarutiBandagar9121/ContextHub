@@ -1,12 +1,13 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
 
 from organization_service.dependencies.db import get_db
 from organization_service.dependencies.user import get_current_user_id
-from organization_service.schemas.organization_schema import CreateOrganization, InvitationStatusCheckResponse, OrganizationFullDetailsResponse, OrganizationInvitationPayload, OrganizationInvitationResponse, OrganizationListResponse, OrganizationResponse
+from organization_service.schemas.organization_schema import AcceptInvitationRegisterRequest, AcceptInvitationRegisterResponse, CreateOrganization, InvitationStatusCheckResponse, OrganizationFullDetailsResponse, OrganizationInvitationPayload, OrganizationInvitationResponse, OrganizationListResponse, OrganizationResponse
 from organization_service.services import organization_service as org_service
+from organization_service.dependencies import db
 
 router = APIRouter()
 #path: api/v1/organization
@@ -54,3 +55,11 @@ def create_org_invitation(
 @router.get("/invitation/{invitation_token}", response_model=InvitationStatusCheckResponse, status_code=status.HTTP_200_OK)
 async def check_invitation_status(invitation_token:str, db:Session = Depends(get_db)):
     return await org_service.check_invitation_status(invitation_token, db)
+
+@router.post("/invitation/{invitation_token}/accept", response_model=AcceptInvitationRegisterResponse, status_code=status.HTTP_200_OK)
+async def accept_invitation(
+    invitation_token:str,
+    payload:AcceptInvitationRegisterRequest,
+    response: Response,
+    db:Session = Depends(get_db)):
+    return await org_service.accept_invitation_register(invitation_token, payload, response, db)

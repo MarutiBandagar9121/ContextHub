@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     user_service_timeout:int = 30
     user_service_retry_count:int = 3
 
+    cookie_secure: bool = False  # set True in production behind HTTPS
+    refresh_token_expire_days: int = 7
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
