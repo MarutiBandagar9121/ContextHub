@@ -147,6 +147,66 @@ Responsibilities:
 
 ---
 
+# Frontend
+
+A React 18 SPA lives in `frontend/`. It is the primary client for the platform.
+
+**Stack:**
+- **Vite** — dev server and build tool
+- **React 18** with React Router v6 for client-side routing
+- **TanStack Query v5** for server-state caching and async data fetching
+- **Zustand** for auth state (access token, user identity)
+- **Axios** for HTTP requests to the backend services
+- **Tailwind CSS** for styling
+
+**Client-side routes:**
+
+| Path | Page | Auth |
+|------|------|------|
+| `/login` | Login | Public |
+| `/register` | Register | Public |
+| `/verify-otp` | OTP verification | Public |
+| `/invite/:token` | Invitation accept / sign-up | Public (standalone, no app shell) |
+| `/dashboard` | Dashboard | Protected |
+| `/organization/:orgId` | Organization overview | Protected |
+| `/organization/:orgId/members` | Member list | Protected |
+| `/organization/:orgId/invite` | Send invitation | Protected |
+| `/organization/:orgId/knowledge` | Knowledge base | Protected |
+
+Protected routes are guarded by `ProtectedRoute` (checks Zustand auth store). Invitation acceptance (`/invite/:token`) is a standalone page that calls `GET /api/v1/organization/invitation/{token}` to determine whether the invited user already has an account, then routes them through login or registration accordingly.
+
+---
+
+# Implemented Routes
+
+## Auth Service (`http://localhost:8000`)
+
+### Public — `/api/v1/auth`
+- `POST /register` — register a new user (or re-issue OTP for an unverified existing one)
+- `POST /verify_otp` — verify OTP, mark user verified, issue access token + refresh token cookie
+- `POST /resend_otp` — re-issue OTP for an unverified user (does not issue tokens)
+- `POST /login` — email + password login, issues access token + refresh token cookie
+- `POST /logout` — revoke refresh token, clear cookie
+- `POST /refresh` — exchange refresh token cookie for a new access token (token rotated)
+
+### Internal — `/internal/api/v1/user` (service-to-service, no user JWT)
+- `POST /batch` — fetch multiple users by ID list
+- `GET /?email=<email>` — fetch a single user by email (returns 404 if not found)
+- `POST /register` — register a user via invitation (invitation-based sign-up flow)
+
+## Organization Service (`http://localhost:8001`)
+
+### Public (requires Bearer access token) — `/api/v1/organization`
+- `POST /` — create an organization; caller becomes OWNER
+- `GET /` — list all organizations the current user belongs to
+- `GET /{org_id}` — full org details with all members and their roles (cross-service call to auth_service)
+- `DELETE /{org_id}` — soft-delete an organization (owner only)
+- `POST /invitation` — send an invitation by email (ADMIN/OWNER only)
+- `GET /invitation/{token}` — check invitation status; resolves whether the invited email has an account and lazily updates `is_new_user` / `invited_user_id` on the invitation record
+- `POST /invitation/{token}/accept` — accept an invitation; registers a new user or links an existing one, adds org membership row
+
+---
+
 # Cross-Service Authentication
 
 `auth_service` is the only service that signs tokens. Every other service only **verifies** them — none of them call back into `auth_service` to do it.

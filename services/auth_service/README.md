@@ -14,7 +14,7 @@ Not implemented yet: password reset, OAuth, RBAC/permissions, actually sending O
 
 ## Endpoints
 
-All under `/api/v1`:
+Public — `/api/v1/auth`:
 
 - `POST /register` — create a user (or re-issue an OTP for an existing, unverified one) and send an email-verification OTP
 - `POST /verify_otp` — verify the OTP, mark the user verified, issue an access token + refresh token cookie
@@ -22,6 +22,12 @@ All under `/api/v1`:
 - `POST /login` — email + password login, issues an access token + refresh token cookie
 - `POST /refresh` — exchange the refresh token cookie for a new access token (rotates the refresh token)
 - `POST /logout` — revoke the refresh token cookie's DB record and clear the cookie
+
+Internal — `/internal/api/v1/user` (service-to-service only, no user JWT):
+
+- `POST /batch` — fetch multiple users by a list of IDs; used by `organization_service` to hydrate member lists
+- `GET /?email=<email>` — fetch a single user by email address; returns 404 if not found; used by `organization_service` to resolve whether an invited email already has an account
+- `POST /register` — register a user via an organization invitation (invitation-based sign-up flow)
 
 ## Architectural decisions
 
